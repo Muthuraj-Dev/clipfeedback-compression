@@ -38,10 +38,15 @@ app.post("/compress", async (req, res) => {
       .download(original_path);
 
     if (error) {
-      console.error("❌ Download error:", error);
-      throw error;
+      console.error("Download error:", error.message);
+      return res.status(500).json({ error: "Failed to download original video" });
     }
 
+    if (!data) {
+      console.error("No data returned from Supabase download");
+      return res.status(500).json({ error: "No video data returned" });
+    }
+    
     const fileStream = fs.createWriteStream(tempOriginal);
     await new Promise((resolve, reject) => {
       data.body.pipe(fileStream);
