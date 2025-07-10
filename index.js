@@ -1,12 +1,15 @@
 // index.js
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const { createClient } = require("@supabase/supabase-js");
 const ffmpeg = require("fluent-ffmpeg");
 const fs = require("fs");
 const fetch = require("node-fetch");
 const path = require("path");
 
+
+app.use(cors());
 const app = express();
 app.use(express.json({ limit: "50mb" }));
 
