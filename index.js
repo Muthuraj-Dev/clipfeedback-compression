@@ -1,4 +1,22 @@
 // index.js
+async function waitForFile(path, retries = 5, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    const { data, error } = await supabase.storage.from("videos").download(path);
+
+    if (data?.body) {
+      console.log(`✅ File available on attempt ${i + 1}`);
+      return data;
+    }
+
+    console.log(`⏳ Retry ${i + 1}/${retries}: File not ready, retrying in ${delay}ms`);
+    await new Promise(res => setTimeout(res, delay));
+  }
+
+  throw new Error("File not available after multiple retries");
+}
+
+
+
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -33,20 +51,31 @@ app.post("/compress", async (req, res) => {
     console.log("📥 Downloading original from Supabase:", original_path);
 
     // ⬇️ Download original video from Supabase
-    const { data, error } = await supabase.storage
-      .from("videos")
-      .download(original_path);
+    // const { data, error } = await supabase.storage
+    //   .from("videos")
+    //   .download(original_path);
 
-    if (error) {
-      console.error("Download error:", error.message);
-      return res.status(500).json({ error: "Failed to download original video" });
+    // if (error) {
+    //   console.error("Download error:", error.message);
+    //   return res.status(500).json({ error: "Failed to download original video" });
+    // }
+
+    // if (!data || !data.body) {
+    //   console.error("No data returned from Supabase download");
+    //   return res.status(500).json({ error: "No video data returned" });
+    // }
+
+    // ✅ Retry logic to wait for uploaded video
+    let data;
+    try {
+      console.log("📥 Waiting for Supabase file:", original_path);
+      data = await waitForFile(original_path);
+    } catch (err) {
+      console.error("❌ File not available:", err.message);
+      return res.status(500).json({ error: "Video file not ready yet" });
     }
 
-    if (!data) {
-      console.error("No data returned from Supabase download");
-      return res.status(500).json({ error: "No video data returned" });
-    }
-    
+
     const fileStream = fs.createWriteStream(tempOriginal);
     await new Promise((resolve, reject) => {
       data.body.pipe(fileStream);
