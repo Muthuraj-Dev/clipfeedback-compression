@@ -10,15 +10,7 @@ const path = require("path");
 // ✅ Setup
 const app = express();
 
-// ✅ Enable CORS before any routes
-app.use(cors({
-  origin: ['http://localhost:8080', 'https://your-production-domain.com'], // update this in production
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
-}));
-
-// ✅ Handle preflight CORS requests
-app.options('*', cors());
+app.use(cors({ origin: "*" }));
 
 app.use(express.json({ limit: "50mb" }));
 
